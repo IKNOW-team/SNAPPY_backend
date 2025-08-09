@@ -96,7 +96,8 @@ async def upload_and_classify(
 
     # pydantic でバリデートして返す（不正があれば422）
     return TaggedResponse.model_validate(payload)
-
+  
+  
 @router.post(
     "/upload-and-classify-test",
     response_model=TaggedResponse,
@@ -115,13 +116,13 @@ async def upload_and_classify_test(
     if len(files) > MAX_FILES:
         raise HTTPException(status_code=413, detail=f"Too many files (>{MAX_FILES})")
 
-    # tagsのパース（不正時はデフォルト）
+    # tagsパース（不正時はデフォルト）
     try:
         candidate_tags = DEFAULT_TAGS if tags is None else json.loads(tags)
         if not (
-            isinstance(candidate_tags, list)
-            and all(isinstance(x, list) and len(x) == 2 and all(isinstance(y, str) for y in x)
-                    for x in candidate_tags)
+            isinstance(candidate_tags, list) and
+            all(isinstance(x, list) and len(x) == 2 and all(isinstance(y, str) for y in x)
+                for x in candidate_tags)
         ):
             candidate_tags = DEFAULT_TAGS
     except Exception:
@@ -130,52 +131,10 @@ async def upload_and_classify_test(
     ocr = OCRService(vc.client)
     classifier = ClassifyService(gc)
 
-    # ★ 並列実行は維持
+    # 並列実行（入力順を維持する gather 実装を利用）
     results = await bounded_gather(
         (handle_one_file(f, ocr, classifier, candidate_tags) for f in files),
         limit=settings.ocr_concurrency,
     )
 
     return TaggedResponse(results=list(results))
-  
-@router.post(
-    "/upload-and-classify-test-2",
-    response_model=TaggedResponse,
-    status_code=status.HTTP_200_OK
-)
-async def upload_and_classify_test_2(
-    files: List[UploadFile] = File(..., description="画像ファイルを複数"),
-    tags: Optional[str] = Form(None, description='[["tag","desc"], ...] のJSON文字列'),
-    vc: VisionClient = Depends(get_vision_client),
-    gc: GeminiClient = Depends(get_gemini_client),
-):
-    if not files:
-        raise HTTPException(status_code=400, detail="No files provided")
-
-    MAX_FILES = 16
-    if len(files) > MAX_FILES:
-        raise HTTPException(status_code=413, detail=f"Too many files (>{MAX_FILES})")
-
-    # tags のパース（不正時はデフォルト）
-    try:
-        candidate_tags = DEFAULT_TAGS if tags is None else json.loads(tags)
-        if not (
-            isinstance(candidate_tags, list)
-            and all(isinstance(x, list) and len(x) == 2 and all(isinstance(y, str) for y in x)
-                    for x in candidate_tags)
-        ):
-            candidate_tags = DEFAULT_TAGS
-    except Exception:
-        candidate_tags = DEFAULT_TAGS
-
-    ocr = OCRService(vc.client)
-    classifier = ClassifyService(gc)
-
-    # ★ 並列なし：順次処理
-    results: list[TaggedItem] = []
-    for f in files:
-        item = await handle_one_file(f, ocr, classifier, candidate_tags)
-        results.append(item)
-
-    return TaggedResponse(results=results)
-  

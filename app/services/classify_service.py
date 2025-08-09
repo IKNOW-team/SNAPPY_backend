@@ -75,7 +75,7 @@ def _extract_json_object(s: str) -> str | None:
 
 def _fallback_from_ocr(ocr_text: str, candidate_tags: list[list[str]]) -> dict:
     t = (ocr_text or "").strip()
-    # タイトル（OCRから）
+    # タイトル（OCRから抽出）
     title = ""
     for line in t.splitlines():
         s=line.strip()
@@ -92,7 +92,7 @@ def _fallback_from_ocr(ocr_text: str, candidate_tags: list[list[str]]) -> dict:
     else:
         u=re.search(r"(https?://[^\s]+)", t)
         if u: location=u.group(1)[:80]
-    # タグ推定
+    # タグ推定（候補内から）
     tag = candidate_tags[0][0] if candidate_tags else "location"
     if re.search(r"\d{1,2}:\d{2}|navitime|jr|発|着|train", t, re.I): tag="train"
     elif re.search(r"¥|\$|価格|税込|円|amazon|rakuten|mercari", t): tag="things"
@@ -118,23 +118,23 @@ class ClassifyService:
             response_mime_type="application/json",
         )
 
-    def classify_json(self, ocr_text: str) -> dict:
-        """厳密JSONで返す。失敗時も同スキーマでフォールバック。"""
+    def classify_json_with_tags(self, ocr_text: str, candidate_tags: list[list[str]] = DEFAULT_TAGS) -> dict:
+        """候補タグを使って厳密JSONで返す。失敗時も同スキーマでフォールバック。"""
         safe_ocr_text = (ocr_text or "").replace("$", "$$")
-        tags_str = json.dumps(DEFAULT_TAGS, ensure_ascii=False)
+        tags_str = json.dumps(candidate_tags or DEFAULT_TAGS, ensure_ascii=False)
         prompt = PROMPT_TMPL.substitute(ocr_text=safe_ocr_text, candidate_tags=tags_str)
 
         try:
             res = self.gemini.model.generate_content(prompt, generation_config=self._genconf)
         except Exception as e:
             logging.exception("Gemini generate_content error")
-            return _fallback_from_ocr(ocr_text, DEFAULT_TAGS)
+            return _fallback_from_ocr(ocr_text, candidate_tags or DEFAULT_TAGS)
 
         raw = (getattr(res, "text", None) or "").strip()
         if not raw:
             fb = getattr(res, "prompt_feedback", None)
             logging.warning("[Gemini] empty text. feedback=%s", getattr(fb, "block_reason", None))
-            return _fallback_from_ocr(ocr_text, DEFAULT_TAGS)
+            return _fallback_from_ocr(ocr_text, candidate_tags or DEFAULT_TAGS)
 
         # JSONとして頑丈に解釈
         try:
@@ -142,19 +142,19 @@ class ClassifyService:
         except Exception:
             block = _extract_json_object(raw)
             if not block:
-                return _fallback_from_ocr(ocr_text, DEFAULT_TAGS)
+                return _fallback_from_ocr(ocr_text, candidate_tags or DEFAULT_TAGS)
             try:
                 payload = json.loads(block)
             except Exception:
-                return _fallback_from_ocr(ocr_text, DEFAULT_TAGS)
+                return _fallback_from_ocr(ocr_text, candidate_tags or DEFAULT_TAGS)
 
-        # 形を最終正規化
+        # 最終正規化
         try:
             results = payload.get("results")
             if not isinstance(results, list) or not results or not isinstance(results[0], dict):
                 raise ValueError("results missing")
             item = results[0]
-            out = {
+            return {
                 "results": [{
                     "status.success": bool(item.get("status.success", False)),
                     "tag": str(item.get("tag", "")),
@@ -163,7 +163,6 @@ class ClassifyService:
                     "description": str(item.get("description", "")),
                 }]
             }
-            return out
         except Exception as e:
             logging.warning("[Gemini] normalize failed: %s", e)
-            return _fallback_from_ocr(ocr_text, DEFAULT_TAGS)
+            return _fallback_from_ocr(ocr_text, candidate_tags or DEFAULT_TAGS)
