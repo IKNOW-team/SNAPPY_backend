@@ -5,38 +5,46 @@ import google.generativeai as genai
 from app.clients.gemini_client import GeminiClient
 
 DEFAULT_TAGS = [
-    ["location", "行きたい場所、泊まりたい場所など。位置情報を持つ。位置情報を返してほしい"],
-    ["train",    "時刻表など。どの駅に何時発の電車が、どの駅に何時につくか"],
-    ["things",   "ほしいもの"],
+    ["location", "行きたい場所、泊まりたい場所など。お店の情報、ご飯屋などもここに含まれる。位置情報を持つ。位置情報を返してほしい"],
+    ["train",    "時刻表など。どの駅に何時発の電車が、どの駅に何時につくかを詳細に書け。"],
+    ["things",   "ほしいもの、買い物リストなど。価格や商品名、URLなどを含む"],
+    ["others", "その他の情報。上記に当てはまらないもの。位置情報を持たない"],
 ]
 
 PROMPT_TMPL = Template(
     """
-以下はOCRで読み取った内容です。以下の情報を抽出してください：
+あなたはOCRテキストの情報抽出器です。必ず **厳密なJSON** だけを返してください（前置き・コードフェンス禁止）。
 
-1. ジャンル（ご飯屋 / 観光地 / 本 / 乗り換え案内 / その他）
-2. タイトル（店名・本の名前など）
-3. 場所（住所・市区町村・駅名など）
-4. 備考（価格・営業時間・感想などがあれば）
-
-※ 出力は **厳密なJSON**。前置き・コードフェンスは禁止。
-※ title は必ず OCR から抽出（ファイル名は使わない）。
-
-候補タグ:
+■ 入力
+- candidate_tags: [["<tag>","<description>"], ...]
 $candidate_tags
+    - 出力の "tag" フィールドは、上記 candidate_tags の **第1要素（タグ文字列）をそのまま** 1つだけ使用します。
+    - **同義語・翻訳・新しい語**を作らないでください。候補に無い文字列は絶対に使わないこと。
+    - どれにも当てはまらない場合は、**候補の中から最も近い説明のタグ**を1つ選びます（それでも難しければ candidate_tags の先頭を使う）。
 
-### OCRテキスト：
+- ocr_text:
 $ocr_text
 
-出力（このJSONのみ）:
+■ 出力フィールド仕様
+- "status.success": trueを返すこと。
+- "tag": candidate_tags の **第1要素**のいずれか **そのまま**、何も当てはまらない場合は、othersにする
+- "title": OCRから短く要約したタイトル（ファイル名は使わない）
+- "location": 住所/駅/地名/URL 等の位置ヒント。GoogleMapでそのままさせるようなものがよい。無ければ ""（空文字）
+- "description": 要点の短い説明（1〜2文、URL1つまで）。trainの発着情報などは詳しく載せる。無ければ ""
+
+■ 禁止事項
+- JSON以外の文字、コメント、コードフェンス、例示テキストを出力しない
+- "tag" に候補外の語（例: 「ご飯屋」「レストラン」など）を出さない
+
+■ 形式（このJSONだけを返す）
 {
   "results": [
     {
       "status.success": true,
-      "tag": "<候補タグの中から1つ>",
-      "title": "<OCRから抽出した短いタイトル>",
-      "location": "<住所/駅/地名/URLなど。無ければ空文字>",
-      "description": "<要点の短い説明（1〜2文以内）。無ければ空文字>"
+      "tag": "<candidate_tags の第1要素から厳密一致で1つ>",
+      "title": "<短いタイトル>",
+      "location": "<位置ヒント or 空文字>",
+      "description": "<短い説明 or 空文字>"
     }
   ]
 }
@@ -154,10 +162,17 @@ class ClassifyService:
             if not isinstance(results, list) or not results or not isinstance(results[0], dict):
                 raise ValueError("results missing")
             item = results[0]
+            
+            # タグのバリデーション
+            allowed_tags = {t[0] for t in (candidate_tags or DEFAULT_TAGS)}
+            tag_val = str(item.get("tag", "")).strip()
+            if tag_val not in allowed_tags:
+                tag_val = "others"
+                
             return {
                 "results": [{
                     "status.success": bool(item.get("status.success", False)),
-                    "tag": str(item.get("tag", "")),
+                    "tag":tag_val,
                     "title": str(item.get("title", "")),
                     "location": str(item.get("location", "")),
                     "description": str(item.get("description", "")),
