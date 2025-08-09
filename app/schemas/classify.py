@@ -22,5 +22,5 @@ class TaggedItem(BaseModel):
     location: str
     description: str
 
-class TaggedBatchResponse(BaseModel):
+class TaggedResponse(BaseModel):
     results: List[TaggedItem]

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status,
 from app.clients.vision_client import get_vision_client, VisionClient
 from app.clients.gemini_client import get_gemini_client, GeminiClient
 from app.schemas.ocr import OCRResponse
-from app.schemas.classify import ClassifyResponse, BatchClassifyItem, TaggedItem ,BatchClassifyResponse, TaggedBatchResponse
+from app.schemas.classify import ClassifyResponse, BatchClassifyItem, TaggedItem ,BatchClassifyResponse, TaggedResponse
 from app.services.ocr_service import OCRService
 from app.services.classify_service import ClassifyService
 from app.utils.validators import is_mime_allowed, read_limited, MAX_BYTES
@@ -45,80 +45,61 @@ async def ocr_and_classify(file_path: str = "static/image1.jpg",
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="File not found")
       
-@router.post("/upload-and-classify", response_model=ClassifyResponse, status_code=status.HTTP_200_OK)
-async def upload_and_classify(file: UploadFile = File(...),
-                              vc: VisionClient = Depends(get_vision_client),
-                              gc: GeminiClient = Depends(get_gemini_client)):
-    # validate file type
+@router.post(
+    "/upload-and-classify",
+    response_model=TaggedResponse,
+    status_code=status.HTTP_200_OK
+)
+async def upload_and_classify(
+    file: UploadFile = File(..., description="画像ファイル"),
+    vc: VisionClient = Depends(get_vision_client),
+    gc: GeminiClient = Depends(get_gemini_client),
+):
     if not (file.content_type and file.content_type.startswith("image/")):
         raise HTTPException(status_code=415, detail="Unsupported Media Type: expected image/*")
 
-    # load file data
     data = await file.read()
     if not data:
         raise HTTPException(status_code=400, detail="Empty file")
 
-    # OCR → classification
     ocr = OCRService(vc.client)
     text = ocr.run_ocr_bytes(data)
-    classifier = ClassifyService(gc)
-    classification = classifier.classify(text)
 
-    return ClassifyResponse(ocr_text=text, classification=classification)
+    classifier = ClassifyService(gc)
+    payload = classifier.classify_json(text)  # ← dict（{"results":[...]}）
+
+    # pydantic でバリデートして返す（不正があれば422）
+    return TaggedResponse.model_validate(payload)
   
 @router.post(
-    "/upload-and-classify-batch",
-    response_model=BatchClassifyResponse,
+    "/upload-and-classify",
+    response_model=TaggedResponse,
     status_code=status.HTTP_200_OK
 )
-async def upload_and_classify_batch(
-    files: List[UploadFile] = File(..., description="画像ファイルを複数"),
+async def upload_and_classify(
+    file: UploadFile = File(..., description="画像ファイル"),
     vc: VisionClient = Depends(get_vision_client),
     gc: GeminiClient = Depends(get_gemini_client),
 ):
-    if not files:
-        raise HTTPException(status_code=400, detail="No files provided")
+    if not (file.content_type and file.content_type.startswith("image/")):
+        raise HTTPException(status_code=415, detail="Unsupported Media Type: expected image/*")
 
-    # file limit
-    MAX_FILES = 16
-    if len(files) > MAX_FILES:
-        raise HTTPException(status_code=413, detail=f"Too many files (>{MAX_FILES})")
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="Empty file")
 
     ocr = OCRService(vc.client)
+    text = ocr.run_ocr_bytes(data)
+
     classifier = ClassifyService(gc)
+    payload = classifier.classify_json(text)  # ← dict（{"results":[...]}）
 
-    results: list[BatchClassifyItem] = []
-
-    for f in files:
-        name = f.filename or "unnamed"
-        # MIME check
-        if not (f.content_type and f.content_type.startswith("image/")) or f.content_type == "image/svg+xml":
-            results.append(BatchClassifyItem(
-                filename=name, ok=False, error=f"Unsupported Media Type: {f.content_type}"
-            ))
-            continue
-
-        data = await f.read()
-        if not data:
-            results.append(BatchClassifyItem(filename=name, ok=False, error="Empty file"))
-            continue
-
-        try:
-            text = ocr.run_ocr_bytes(data)
-            classification = classifier.classify(text)
-            results.append(BatchClassifyItem(
-                filename=name, ok=True, ocr_text=text, classification=classification
-            ))
-        except Exception as e:
-            results.append(BatchClassifyItem(
-                filename=name, ok=False, error=str(e)
-            ))
-
-    return BatchClassifyResponse(results=results)
+    # pydantic でバリデートして返す（不正があれば422）
+    return TaggedResponse.model_validate(payload)
 
 @router.post(
     "/upload-and-classify-test",
-    response_model=TaggedBatchResponse,
+    response_model=TaggedResponse,
     status_code=status.HTTP_200_OK
 )
 async def upload_and_classify_test(
@@ -155,5 +136,46 @@ async def upload_and_classify_test(
         limit=settings.ocr_concurrency,
     )
 
-    return TaggedBatchResponse(results=list(results))
+    return TaggedResponse(results=list(results))
+  
+@router.post(
+    "/upload-and-classify-test-2",
+    response_model=TaggedResponse,
+    status_code=status.HTTP_200_OK
+)
+async def upload_and_classify_test_2(
+    files: List[UploadFile] = File(..., description="画像ファイルを複数"),
+    tags: Optional[str] = Form(None, description='[["tag","desc"], ...] のJSON文字列'),
+    vc: VisionClient = Depends(get_vision_client),
+    gc: GeminiClient = Depends(get_gemini_client),
+):
+    if not files:
+        raise HTTPException(status_code=400, detail="No files provided")
+
+    MAX_FILES = 16
+    if len(files) > MAX_FILES:
+        raise HTTPException(status_code=413, detail=f"Too many files (>{MAX_FILES})")
+
+    # tags のパース（不正時はデフォルト）
+    try:
+        candidate_tags = DEFAULT_TAGS if tags is None else json.loads(tags)
+        if not (
+            isinstance(candidate_tags, list)
+            and all(isinstance(x, list) and len(x) == 2 and all(isinstance(y, str) for y in x)
+                    for x in candidate_tags)
+        ):
+            candidate_tags = DEFAULT_TAGS
+    except Exception:
+        candidate_tags = DEFAULT_TAGS
+
+    ocr = OCRService(vc.client)
+    classifier = ClassifyService(gc)
+
+    # ★ 並列なし：順次処理
+    results: list[TaggedItem] = []
+    for f in files:
+        item = await handle_one_file(f, ocr, classifier, candidate_tags)
+        results.append(item)
+
+    return TaggedResponse(results=results)
   

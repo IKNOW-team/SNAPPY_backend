@@ -10,4 +10,4 @@ if [ -n "${GCP_SA_JSON:-}" ]; then
 fi
 
 # 2) Uvicornを起動（Renderは $PORT を注入）
-exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8080}"
+exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8080}" --reload 
