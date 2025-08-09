@@ -100,7 +100,7 @@ curl -X POST http://localhost:8080/ocr/classify \
 
 ## 📁 プロジェクト構造
 
-```
+```bash
 giiku/
 ├── app/                    # アプリケーションコード
 │   ├── clients/           # APIクライアント
@@ -127,7 +127,7 @@ giiku/
 │       └── validators.py   # バリデーション
 ├── static/                # 画像ファイル
 └── secrets/               # 認証情報
-
+```
 ### 開発環境セットアップ
 
 1. Python環境の準備
