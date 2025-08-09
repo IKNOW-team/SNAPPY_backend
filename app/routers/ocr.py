@@ -44,32 +44,6 @@ async def ocr_and_classify(file_path: str = "static/image1.jpg",
         return ClassifyResponse(ocr_text=text, classification=classification)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="File not found")
-      
-@router.post(
-    "/upload-and-classify",
-    response_model=TaggedResponse,
-    status_code=status.HTTP_200_OK
-)
-async def upload_and_classify(
-    file: UploadFile = File(..., description="画像ファイル"),
-    vc: VisionClient = Depends(get_vision_client),
-    gc: GeminiClient = Depends(get_gemini_client),
-):
-    if not (file.content_type and file.content_type.startswith("image/")):
-        raise HTTPException(status_code=415, detail="Unsupported Media Type: expected image/*")
-
-    data = await file.read()
-    if not data:
-        raise HTTPException(status_code=400, detail="Empty file")
-
-    ocr = OCRService(vc.client)
-    text = ocr.run_ocr_bytes(data)
-
-    classifier = ClassifyService(gc)
-    payload = classifier.classify_json(text)  # ← dict（{"results":[...]}）
-
-    # pydantic でバリデートして返す（不正があれば422）
-    return TaggedResponse.model_validate(payload)
   
 @router.post(
     "/upload-and-classify",
