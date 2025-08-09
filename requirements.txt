@@ -1,0 +1,5 @@
+google-cloud-vision
+uvicorn
+fastapi
+python-dotenv
+google-generativeai

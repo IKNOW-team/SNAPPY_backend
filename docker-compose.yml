@@ -1,0 +1,13 @@
+# docker-compose.yml
+version: "3"
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - ./vision-key.json:/app/vision-key.json
+      - ./static:/app/static
+    env_file:
+      - .env
