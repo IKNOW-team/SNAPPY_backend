@@ -2,6 +2,8 @@
 
 Google Cloud Vision API と Gemini AI を使用した OCR・画像分析 API サーバー
 
+Google Cloud Vision API と Gemini AI を使用した OCR・画像分析 API サーバー
+
 ## 概要
 
 このプロジェクトは、画像からテキストを抽出し、AI による自動分類を行う FastAPI ベースの WebAPI です。主に以下の機能を提供します：
@@ -112,7 +114,7 @@ curl http://localhost:8080/ocr
 curl http://localhost:8080/ocr-and-classify
 ```
 
-<!-- ## プロジェクト構造
+## プロジェクト構造
 
 ```
 giiku/
@@ -129,7 +131,7 @@ giiku/
 ├── vision-key.json         # Google Cloud認証キー
 ├── .env                    # 環境変数（要作成）
 └── README.md              # このファイル
-``` -->
+```
 
 ## 依存関係
 
