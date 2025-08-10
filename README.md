@@ -313,39 +313,6 @@ tail -f logs/app.log
 - 🚀 バッチ処理は非同期で実行
 - 💾 結果をキャッシュ
 
-## 🤝 コントリビューション
-
-1. Forkする
-2. フィーチャーブランチを作成
-3. 変更をコミット
-4. プルリクエストを作成
-
-## 📝 ライセンス
-
-MIT License
-
-## 👥 コントリビューション
-
-1. このリポジトリをFork
-2. 機能ブランチを作成
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. 変更をコミット
-   ```bash
-   git commit -m 'Add amazing feature'
-   ```
-4. プッシュ
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-5. プルリクエストを作成
-
-## 📞 サポート
-
-- GitHub Issues: [Report a bug](https://github.com/nunupy345345/SNAPPY_backend/issues)
-- Email: [your-email@example.com](mailto:your-email@example.com)
-
 ## 📄 ライセンス
 
 このプロジェクトはMIT Licenseの下で公開されています。
