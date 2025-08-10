@@ -100,7 +100,7 @@ curl -X POST http://localhost:8080/ocr/classify \
 
 ## 📁 プロジェクト構造
 
-```bash
+```
 giiku/
 ├── app/                    # アプリケーションコード
 │   ├── clients/           # APIクライアント
