@@ -1,28 +1,28 @@
-# 📸 SNAPPY Backend
+# SNAPPY Backend
 
 OCR・画像分析APIサーバー | Google Cloud Vision + Gemini AI
 
-## 📋 概要
+## 概要
 
 SNAPPYは、画像からテキストを抽出し、AIで自動分類するWebAPIサービスです。
 Google Cloud VisionとGemini AIを活用し、高精度なOCRと知的な情報分類を実現します。
 
-### ✨ 主な機能
+### 主な機能
 
-- 🔍 **画像分析**: Google Cloud Visionによる高精度な画像認識
-- 📝 **テキスト抽出**: OCRによる多言語テキスト抽出
-- 🤖 **AI分類**: Gemini AIによるインテリジェントな情報分類
-- 🌐 **REST API**: FastAPIによる高性能なWeb API
-- ☁️ **クラウド対応**: Renderでの簡単デプロイ
+-  **画像分析**: Google Cloud Visionによる高精度な画像認識
+-  **テキスト抽出**: OCRによる多言語テキスト抽出
+-  **AI分類**: Gemini AIによるインテリジェントな情報分類
+-  **REST API**: FastAPIによる高性能なWeb API
+- ☁ **クラウド対応**: Renderでの簡単デプロイ
 
-### 🛠️ 技術スタック
+###  技術スタック
 
 - **バックエンド**: Python 3.10 + FastAPI
 - **AI/ML**: Google Cloud Vision API + Gemini AI
 - **インフラ**: Docker + Render
 - **アーキテクチャ**: モジュラー設計
 
-## 🚀 クイックスタート
+## クイックスタート
 
 ### 必要なもの
 
@@ -30,7 +30,7 @@ Google Cloud VisionとGemini AIを活用し、高精度なOCRと知的な情報�
 - Google Cloud アカウント
 - Gemini API キー
 
-### 1️⃣ セットアップ
+###  セットアップ
 
 ```bash
 # リポジトリをクローン
@@ -56,7 +56,7 @@ docker-compose up -d
 curl http://localhost:8080/health
 ```
 
-## 📚 API仕様
+## API仕様
 
 ### エンドポイント一覧
 
@@ -98,7 +98,7 @@ curl -X POST http://localhost:8080/ocr/classify \
   }
 }
 
-## 📁 プロジェクト構造
+##  プロジェクト構造
 
 ```sh
 giiku/
@@ -155,7 +155,7 @@ cp .env.example .env
 # FastAPI開発サーバー
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
 
-## 💻 開発ガイド
+##  開発ガイド
 
 ### 新機能の追加手順
 
@@ -220,7 +220,7 @@ coverage report
 - **Swagger UI**: `http://localhost:8080/docs`
 - **ReDoc**: `http://localhost:8080/redoc`
 
-## 🚀 デプロイメント
+##  デプロイ
 
 ### Render へのデプロイ
 
@@ -277,7 +277,7 @@ docker run -d \
 ```
 google.auth.exceptions.DefaultCredentialsError
 ```
-✅ 認証情報を確認
+ 認証情報を確認
 - ローカル: `vision-key.json` の配置
 - 本番: `GCP_SA_JSON` の設定
 
@@ -285,7 +285,7 @@ google.auth.exceptions.DefaultCredentialsError
 ```
 google.api_core.exceptions.ResourceExhausted
 ```
-✅ 使用量を確認
+ 使用量を確認
 - Vision APIの利用制限
 - Gemini APIの利用制限
 
@@ -299,31 +299,30 @@ docker-compose logs -f app
 tail -f logs/app.log
 ```
 
-## 📝 その他
+## 📝その他
 
 ### セキュリティ
 
-- 🔑 APIキーは必ず環境変数で管理
-- 🔒 認証情報はGitで管理しない
-- 🛡️ 本番環境ではCORSを制限
+-  APIキーは必ず環境変数で管理
+-  認証情報はGitで管理しない
+-  本番環境ではCORSを制限
 
 ### パフォーマンス
 
-- 📦 画像は最適化してアップロード
-- 🚀 バッチ処理は非同期で実行
-- 💾 結果をキャッシュ
+- 画像は最適化してアップロード
+- バッチ処理は非同期で実行
+- 結果をキャッシュ
 
 ## 📄 ライセンス
 
 このプロジェクトはMIT Licenseの下で公開されています。
 
-## 👨‍💻 開発者
+##  開発者
 
 - **メインメンテナ**: [@nunupy345345](https://github.com/nunupy345345)
 
 ---
 
-Made with ❤️ by SNAPPY Team
 
 ### メイン依存関係
 
