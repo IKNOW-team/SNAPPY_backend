@@ -15,10 +15,11 @@ import json
 
 router = APIRouter(prefix="/ocr", tags=["ocr"])
 
-DEFAULT_TAGS: list[list[str]] = [
-    ["location", "行きたい場所、泊まりたい場所など。位置情報を持つ。位置情報を返してほしい"],
-    ["train", "時刻表など。どの駅に何時発の電車が、どの駅に何時につくか"],
-    ["things", "ほしいもの"],
+DEFAULT_TAGS = [
+    ["location", "行きたい場所、泊まりたい場所など。お店の情報、ご飯屋などもここに含まれる。位置情報を持つ。位置情報を返してほしい"],
+    ["train",    "時刻表など。どの駅に何時発の電車が、どの駅に何時につくかを詳細に書け。"],
+    ["things",   "ほしいもの、買い物リストなど。価格や商品名、URLなどを含む"],
+    ["others", "その他の情報。上記に当てはまらないもの。位置情報を持たない"],
 ]
 
 @router.get("/text", response_model=OCRResponse)
