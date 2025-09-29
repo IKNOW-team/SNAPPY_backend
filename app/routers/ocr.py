@@ -80,7 +80,7 @@ async def upload_and_classify(
 )
 async def upload_and_classify_test(
     files: List[UploadFile] = File(..., description="画像ファイルを複数"),
-    tags: Optional[str] = Form(None, description='[["tag","desc"], ...] のJSON文字列'),
+    categories: Optional[str] = Form(None, description='[["category","desc"], ...] のJSON文字列'),
     vc: VisionClient = Depends(get_vision_client),
     gc: GeminiClient = Depends(get_gemini_client),
 ):
@@ -91,24 +91,24 @@ async def upload_and_classify_test(
     if len(files) > MAX_FILES:
         raise HTTPException(status_code=413, detail=f"Too many files (>{MAX_FILES})")
 
-    # tagsパース（不正時はデフォルト）
+    # categoriesパース（不正時はデフォルト）
     try:
-        candidate_tags = DEFAULT_TAGS if tags is None else json.loads(tags)
+        candidate_categories = DEFAULT_TAGS if categories is None else json.loads(categories)
         if not (
-            isinstance(candidate_tags, list) and
+            isinstance(candidate_categories, list) and
             all(isinstance(x, list) and len(x) == 2 and all(isinstance(y, str) for y in x)
-                for x in candidate_tags)
+                for x in candidate_categories)
         ):
-            candidate_tags = DEFAULT_TAGS
+            candidate_categories = DEFAULT_TAGS
     except Exception:
-        candidate_tags = DEFAULT_TAGS
+        candidate_categories = DEFAULT_TAGS
 
     ocr = OCRService(vc.client)
     classifier = ClassifyService(gc)
 
     # 並列実行（入力順を維持する gather 実装を利用）
     results = await bounded_gather(
-        (handle_one_file(f, ocr, classifier, candidate_tags) for f in files),
+        (handle_one_file(f, ocr, classifier, candidate_categories) for f in files),
         limit=settings.ocr_concurrency,
     )
 

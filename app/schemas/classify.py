@@ -17,7 +17,7 @@ class BatchClassifyResponse(BaseModel):
     
 class TaggedItem(BaseModel):
     status_success: bool = Field(..., alias="status.success")
-    tag: str
+    category: str
     title: str
     location: str
     description: str
@@ -25,8 +25,8 @@ class TaggedItem(BaseModel):
     lng: Optional[float] = None
     maps_url: Optional[str] = None
     maps_display_name: Optional[str] = None
-    suggest_tag_title: Optional[str] = None
-    suggest_tag_description: Optional[str] = None
+    suggest_category_title: Optional[str] = None
+    suggest_category_description: Optional[str] = None
 
 class TaggedResponse(BaseModel):
     results: List[TaggedItem]
