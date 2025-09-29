@@ -4,8 +4,8 @@ from pydantic import Field
 class Settings(BaseSettings):
     # Gemini
     gemini_api_key: str = Field(..., alias="GEMINI_API_KEY")
-    gemini_model_name: str = Field("models/gemini-1.5-flash", alias="GEMINI_MODEL_NAME")
-
+    gemini_model_name: str = Field("gemini-2.5-flash", alias="GEMINI_MODEL_NAME")
+    google_maps_api_key: str = Field(..., alias="GEMINI_API_KEY")
     # Google Cloud
     google_application_credentials: str = Field(..., alias="GOOGLE_APPLICATION_CREDENTIALS")
 

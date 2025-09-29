@@ -21,6 +21,12 @@ class TaggedItem(BaseModel):
     title: str
     location: str
     description: str
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    maps_url: Optional[str] = None
+    maps_display_name: Optional[str] = None
+    suggest_tag_title: Optional[str] = None
+    suggest_tag_description: Optional[str] = None
 
 class TaggedResponse(BaseModel):
     results: List[TaggedItem]

@@ -2,7 +2,7 @@ google-cloud-vision
 uvicorn
 fastapi
 python-dotenv
-google-generativeai
+google-generativeai>=0.7.0
 pydantic
 pydantic_settings
 python-multipart
