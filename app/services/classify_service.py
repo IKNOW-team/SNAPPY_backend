@@ -29,7 +29,7 @@ $ocr_text
 
 ■ 出力フィールド仕様
 - "status.success": trueを返すこと。
-- "category": candidate_categories の **第1要素**のいずれか **そのまま**、何も当てはまらない場合は、"その他"にする
+- "category": candidate_categories の **第1要素**のいずれか **そのまま**、何も当てはまらない場合は、"その他"sにする
 - "title": OCRから短く要約したタイトル（ファイル名は使わない）
     - もしcategoryが"things"や"もの"や商品であり、複数の商品がある場合は **商品名を半角スラッシュ "/" で連結する**
       例: "化粧水/美容液/美容オイル"
