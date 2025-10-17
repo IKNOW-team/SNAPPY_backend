@@ -29,16 +29,16 @@ $ocr_text
 
 ■ 出力フィールド仕様
 - "status.success": trueを返すこと。
-- "category": candidate_categories の **第1要素**のいずれか **そのまま**、何も当てはまらない場合は、othersにする
+- "category": candidate_categories の **第1要素**のいずれか **そのまま**、何も当てはまらない場合は、"その他"にする
 - "title": OCRから短く要約したタイトル（ファイル名は使わない）
-    - もしcategoryがthingsや商品であり、複数の商品がある場合は **商品名を半角スラッシュ "/" で連結する**
+    - もしcategoryが"things"や"もの"や商品であり、複数の商品がある場合は **商品名を半角スラッシュ "/" で連結する**
       例: "化粧水/美容液/美容オイル"
     - 商品名は短く簡潔に（名詞1〜3語程度）
     - もしcategoryがthingsや商品でなかったら、連結しなくてよい。**OCRから短く要約したタイトルにする**
 - "location": 住所/駅/地名/URL 等の位置ヒント。GoogleMapでそのままさせるようなものがよい。無ければ ""（空文字）
 - "description": 要点の短い説明（1〜2文、URL1つまで）。trainの発着情報などは詳しく載せる。無ければ ""
-- "suggest_category_title": category が "others" の場合に、推奨される簡潔なタグ名（例: "camera", "hotel" など、英語1単語が望ましい）。それ以外は空文字 ""
-- "suggest_category_description": category が "others" の場合に、その推奨タグの説明（例: "カメラ製品に関する記録です"）。それ以外は空文字 ""
+- "suggest_category_title": category が "その他" の場合に、推奨される簡潔なタグ名（例: "カメラ", "ホテル" など、日本語1単語が望ましい）。それ以外は空文字 ""
+- "suggest_category_description": category が "その他" の場合に、その推奨タグの説明（例: "カメラ製品に関する記録です"）。それ以外は空文字 ""
 
 ■ 禁止事項
 - JSON以外の文字、コメント、コードフェンス、例示テキストを出力しない
