@@ -7,10 +7,10 @@ from app.core.config import settings
 import requests
 
 DEFAULT_TAGS = [
-    ["location", "行きたい場所、泊まりたい場所など。お店の情報、ご飯屋などもここに含まれる。位置情報を持つ。位置情報を返してほしい"],
-    ["train",    "時刻表など。どの駅に何時発の電車が、どの駅に何時につくかを詳細に書け。"],
-    ["things",   "ほしいもの、買い物リストなど。価格や商品名、URLなどを含む"],
-    ["others", "その他の情報。上記に当てはまらないもの。位置情報を持たない"],
+    ["場所", "行きたい場所、泊まりたい場所など。お店の情報、ご飯屋などもここに含まれる。位置情報を持つ。位置情報を返してほしい"],
+    ["電車",    "時刻表など。どの駅に何時発の電車が、どの駅に何時につくかを詳細に書け。"],
+    ["商品",   "ほしいもの、買い物リストなど。価格や商品名、URLなどを含む"],
+    ["その他", "その他の情報。上記に当てはまらないもの。位置情報を持たない"],
 ]
 
 PROMPT_TMPL = Template(
@@ -22,7 +22,7 @@ PROMPT_TMPL = Template(
 $candidate_categories
     - 出力の "category" フィールドは、上記 candidate_categories の **第1要素（タグ文字列）をそのまま** 1つだけ使用します。
     - **同義語・翻訳・新しい語**を作らないでください。候補に無い文字列は絶対に使わないこと。
-    - どれにも当てはまらない場合は、**候補の中から最も近い説明のタグ**を1つ選びます（それでも難しければ candidate_categories の先頭を使う）。
+    - どれにも当てはまらない場合は、**候補の中から最も近い説明のタグ**を1つ選びます（それでも難しければ "その他" を使う）。
 
 - ocr_text:
 $ocr_text
@@ -53,7 +53,7 @@ $ocr_text
       "title": "<タイトル>",
       "location": "<住所等 or 空文字>",
       "description": "<説明>",
-      "suggest_category_title": "<categoryがothersのときのみ、簡潔な提案タグ>",
+      "suggest_category_title": "<categoryがその他のときのみ、簡潔な提案タグ>",
       "suggest_category_description": "<その説明>"
     }
   ]
@@ -205,13 +205,13 @@ class ClassifyService:
             allowed_categories = {t[0] for t in (candidate_categories or DEFAULT_TAGS)}
             category_val = str(item.get("category", "")).strip()
             if category_val not in allowed_categories:
-                category_val = "others"
+                category_val = "その他"
                 
             categoryged_results = []
             for item in results:
                 category_val = str(item.get("category", "")).strip()
                 if category_val not in allowed_categories:
-                    category_val = "others"
+                    category_val = "その他"
 
                 location = str(item.get("location", "")).strip()
                 place_info = get_place_from_title_location(item.get("title", ""), location) if location else None
@@ -226,8 +226,8 @@ class ClassifyService:
                     "lng": place_info["lng"] if place_info else None,
                     "maps_url": place_info["maps_url"] if place_info else None,
                     "maps_display_name": place_info["maps_display_name"] if place_info else None,
-                    "suggest_category_title": item.get("suggest_category_title", "") if category_val == "others" else "",
-                    "suggest_category_description": item.get("suggest_category_description", "") if category_val == "others" else ""
+                    "suggest_category_title": item.get("suggest_category_title", "") if category_val == "その他" else "",
+                    "suggest_category_description": item.get("suggest_category_description", "") if category_val == "その他" else ""
                 })
 
             return {"results": categoryged_results}
