@@ -8,6 +8,6 @@ async def root():
     return HealthResponse(message="It works!")
 
 @router.get("/health", response_model=HealthResponse)
-@router.head("/health")
+@router.head("/health", response_model=HealthResponse)
 async def health():
     return HealthResponse(message="ok")
